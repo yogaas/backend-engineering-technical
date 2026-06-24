@@ -4,8 +4,10 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"backend-engineering-technical/internal/booking"
+	"backend-engineering-technical/internal/external"
 	"backend-engineering-technical/internal/ingestion"
 )
 
@@ -29,6 +31,27 @@ func main(){
 	mux.HandleFunc("GET /api/v1/transactions/{id}/status", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		ingestionHandler.Status(w, r, id)
+	})
+	
+	// Section 3
+	thirdPartyClient := &external.MockFlakyClient{FailFirstNCalls: 2} // simulasi 2x gagal lalu sukses
+	circuitBreaker := external.NewCircuitBreaker(5, 10*time.Second)
+	outbox := external.NewOutbox()
+	externalSvc := external.NewService(thirdPartyClient, circuitBreaker, outbox)
+	stopDispatcher := make(chan struct{})
+	go externalSvc.RunDispatcher(5*time.Second, stopDispatcher)
+
+	// Endpoint demo: simulasikan "transaksi sukses" yang lalu dikirim ke accounting service
+	mux.HandleFunc("POST /api/v1/transactions/{id}/send-to-accounting", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		entry := &external.OutboxEntry{
+			ID:            "OB-" + id,
+			TransactionID: id,
+			Payload:       external.Payload{TransactionID: id, Amount: 100},
+		}
+		externalSvc.Enqueue(entry)
+		got, _ := outbox.Get(entry.ID)
+		w.Write([]byte("status pengiriman ke accounting service: " + string(got.Status) + "\n"))
 	})
 	
 	

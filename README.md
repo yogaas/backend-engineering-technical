@@ -7,7 +7,8 @@
 ├── main.go                    # entrypoint, menyatukan seluruh service
 ├── internal/
 │   ├── booking/               # Section 1 — Race Condition
-│   └── ingestion/             # Section 2 — High Traffic Processing
+│   ├── ingestion/             # Section 2 — High Traffic Processing
+│   └── external/              # Section 3 — External API Integration
 └── pkg/response/              # standardized response envelope
 ```
 
@@ -45,6 +46,12 @@ curl -X POST http://localhost:8000/api/v1/transactions \
 curl http://localhost:8000/api/v1/transactions/ING-1/status
 ```
 
+**Section 3 — External API integration (simulasi kirim ke accounting service):**
+
+````bash
+curl -X POST http://localhost:8080/api/v1/transactions/TX-1/send-to-accounting
+# Akan
+
 ## Cara testing
 
 ```bash
@@ -54,4 +61,5 @@ go test ./... -v
 # Test spesifik per skenario
 go test ./internal/booking/...   -v   # Section 1
 go test ./internal/ingestion/... -v   # Section 2
-```
+go test ./internal/external/...  -v   # Section 3
+````
