@@ -9,6 +9,7 @@ import (
 	"backend-engineering-technical/internal/booking"
 	"backend-engineering-technical/internal/external"
 	"backend-engineering-technical/internal/ingestion"
+	"backend-engineering-technical/internal/webhook"
 )
 
 func main(){
@@ -53,6 +54,11 @@ func main(){
 		got, _ := outbox.Get(entry.ID)
 		w.Write([]byte("status pengiriman ke accounting service: " + string(got.Status) + "\n"))
 	})
+	
+	// Section 4
+	paymentStore := webhook.NewPaymentStore()
+	webhookHandler := webhook.NewHandler(paymentStore)
+	mux.HandleFunc("POST /api/v1/webhook/payment", webhookHandler.Handle)
 	
 	
 	addr := ":8000"

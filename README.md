@@ -8,7 +8,8 @@
 ├── internal/
 │   ├── booking/               # Section 1 — Race Condition
 │   ├── ingestion/             # Section 2 — High Traffic Processing
-│   └── external/              # Section 3 — External API Integration
+│   ├── external/              # Section 3 — External API Integration
+│   └── webhook/                # Section 4 — Duplicate Request
 └── pkg/response/              # standardized response envelope
 ```
 
@@ -48,9 +49,22 @@ curl http://localhost:8000/api/v1/transactions/ING-1/status
 
 **Section 3 — External API integration (simulasi kirim ke accounting service):**
 
-````bash
-curl -X POST http://localhost:8080/api/v1/transactions/TX-1/send-to-accounting
-# Akan
+```bash
+curl -X POST http://localhost:8000/api/v1/transactions/TX-1/send-to-accounting
+# Akan retry otomatis jika gagal (2 percobaan pertama disimulasikan gagal)
+```
+
+**Section 4 — Duplicate webhook (kirim payload sama 2x):**
+
+```bash
+curl -X POST http://localhost:8000/api/v1/webhook/payment \
+  -H "Content-Type: application/json" \
+  -d '{"idempotency_key":"idem-001","transaction_id":"TX-1","amount":150000,"status":"PAID"}'
+curl -X POST http://localhost:8000/api/v1/webhook/payment \
+  -H "Content-Type: application/json" \
+  -d '{"idempotency_key":"idem-001","transaction_id":"TX-1","amount":150000,"status":"PAID"}'
+# Request kedua dikembalikan sebagai "duplicate, diabaikan" tanpa double-insert
+```
 
 ## Cara testing
 
@@ -62,4 +76,5 @@ go test ./... -v
 go test ./internal/booking/...   -v   # Section 1
 go test ./internal/ingestion/... -v   # Section 2
 go test ./internal/external/...  -v   # Section 3
-````
+go test ./internal/webhook/...   -v   # Section 4
+```
