@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"backend-engineering-technical/internal/booking"
+	"backend-engineering-technical/internal/datasync"
 	"backend-engineering-technical/internal/external"
 	"backend-engineering-technical/internal/ingestion"
 	"backend-engineering-technical/internal/webhook"
@@ -60,6 +61,14 @@ func main(){
 	webhookHandler := webhook.NewHandler(paymentStore)
 	mux.HandleFunc("POST /api/v1/webhook/payment", webhookHandler.Handle)
 	
+	// Section 5
+	syncSvc := datasync.NewService()
+	syncHandler := datasync.NewHandler(syncSvc)
+	mux.HandleFunc("POST /api/v1/sync/ticket-availability", syncHandler.Handle)
+
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	})
 	
 	addr := ":8000"
 	log.Printf("Running apps di http://localhost%s", addr)

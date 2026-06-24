@@ -9,7 +9,8 @@
 │   ├── booking/               # Section 1 — Race Condition
 │   ├── ingestion/             # Section 2 — High Traffic Processing
 │   ├── external/              # Section 3 — External API Integration
-│   └── webhook/                # Section 4 — Duplicate Request
+│   ├── webhook/               # Section 4 — Duplicate Request
+│   └── datasync/              # Section 5 — Data Synchronization
 └── pkg/response/              # standardized response envelope
 ```
 
@@ -66,6 +67,18 @@ curl -X POST http://localhost:8000/api/v1/webhook/payment \
 # Request kedua dikembalikan sebagai "duplicate, diabaikan" tanpa double-insert
 ```
 
+**Section 5 — Data sync (kirim update out-of-order):**
+
+```bash
+curl -X POST http://localhost:8000/api/v1/sync/ticket-availability \
+  -H "Content-Type: application/json" \
+  -d '{"ticket_id":"VIP-1","quantity":2,"version":2}'
+curl -X POST http://localhost:8000/api/v1/sync/ticket-availability \
+  -H "Content-Type: application/json" \
+  -d '{"ticket_id":"VIP-1","quantity":5,"version":1}'
+# Update kedua (version lebih lama) diabaikan, quantity tetap 2
+```
+
 ## Cara testing
 
 ```bash
@@ -77,4 +90,5 @@ go test ./internal/booking/...   -v   # Section 1
 go test ./internal/ingestion/... -v   # Section 2
 go test ./internal/external/...  -v   # Section 3
 go test ./internal/webhook/...   -v   # Section 4
+go test ./internal/datasync/...  -v   # Section 5
 ```
