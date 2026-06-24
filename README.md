@@ -11,7 +11,8 @@
 │   ├── external/              # Section 3 — External API Integration
 │   ├── webhook/               # Section 4 — Duplicate Request
 │   └── datasync/              # Section 5 — Data Synchronization
-└── pkg/response/              # standardized response envelope
+├── pkg/response/              # standardized response envelope
+└── docs/flow-diagram.md       # diagram flow gabungan (Mermaid)
 ```
 
 ## Cara menjalankan
